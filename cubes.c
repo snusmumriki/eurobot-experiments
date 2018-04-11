@@ -13,14 +13,22 @@ typedef struct {
     char push;
 } Step;
 
-const char inv[CUBES_NUM] = {-1, 3, 4, 1, 2};
-const char per[PER_NUM][PAT_LEN] = {
-        {0, 1, 2},
-        {0, 2, 1},
-        {1, 0, 2},
-        {1, 2, 0},
-        {2, 0, 1},
-        {2, 1, 0}};
+typedef struct {
+    char steps;
+    char shift;
+} Weight;
+
+const unsigned char inv[CUBES_NUM] = {0, 3, 4, 1, 2};
+const unsigned char per[PER_NUM][PAT_LEN] = {
+        {0, 1, 4},
+        {0, 4, 1},
+        {1, 0, 4},
+        {1, 4, 0},
+        {4, 0, 1},
+        {4, 1, 0}};
+
+Weight weights[PER_NUM];
+
 
 char diff(char cube, char cube1) {
     char num = cube1 - cube;
@@ -31,19 +39,38 @@ char diff(char cube, char cube1) {
     else return num;
 }
 
-void sequence_set(Step sequence[CUBES_NUM], char init_cube, const unsigned int pattern[PAT_LEN]) {
-    char rows[CUBES_NUM] = {-1, 1, 0, 1, 0};
+void sequence_set(Step sequence[CUBES_NUM], char init_cube, const unsigned char pattern[PAT_LEN]) {
     unsigned int set = 0b11111u ^(0b1u << pattern[0]) ^(0b1u << pattern[1]) ^(0b1u << pattern[2]);
-    char pre_pattern[CUBES_NUM][PAT_LEN] = {{},
-                                            {},
-                                            {}};
-    char patterns[PER_NUM][CUBES_NUM] = {
-
-    };
-    for (int i = 0; i < PER_NUM; i++)
+    unsigned int tmp = set & (~set + 1);
+    set ^= tmp;
+    unsigned char pre_pattern[CUBES_NUM];
+    pre_pattern[0] = (unsigned char) (((tmp & 0b1u) != 0) * 1u |
+                                      ((tmp & 0b10u) != 0) * 2u |
+                                      ((tmp & 0b1000u) != 0) * 3u |
+                                      ((tmp & 0b10000u) != 0) * 4u);
+    pre_pattern[1] = pattern[0];
+    pre_pattern[2] = pattern[1];
+    pre_pattern[3] = pattern[2];
+    tmp = set & (~set + 1);
+    pre_pattern[4] = (unsigned char) (((tmp & 0b1u) != 0) * 1u |
+                                      ((tmp & 0b10u) != 0) * 2u |
+                                      ((tmp & 0b1000u) != 0) * 3u |
+                                      ((tmp & 0b10000u) != 0) * 4u);
+    unsigned char patterns[PER_NUM][CUBES_NUM];
+    for (int i = 0; i < PER_NUM; i++) {
+        int index = 0;
         for (int j = 0; j < PAT_LEN; j++) {
-            for (int k = 0; k < 1 + 2 * (per[i][j] % 2); k++)
+            int shift = per[i][j];
+            for (int k = 0; k < 1 + 2 * (shift & 1); k++, index++)
+                patterns[i][index] = pre_pattern[shift + k];
         }
+    }
 
+    char rows[CUBES_NUM] = {2, 1, 0, 1, 0};
+    for (int i = 0; i < PER_NUM; i++) {
 
+    }
+
+    char groups[CUBES_NUM];
+    int groups_size = 0;
 }
