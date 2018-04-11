@@ -5,7 +5,7 @@
 #include "cubes.h"
 
 #define CUBES_NUM 5
-#define PER_NUM 6
+#define PER_NUM 12
 #define PAT_LEN 3
 
 typedef struct {
@@ -19,7 +19,7 @@ typedef struct {
 } Weight;
 
 const unsigned char inv[CUBES_NUM] = {0, 3, 4, 1, 2};
-const unsigned char per[PER_NUM][PAT_LEN] = {
+const unsigned char per[PER_NUM / 2][PAT_LEN] = {
         {0, 1, 4},
         {0, 4, 1},
         {1, 0, 4},
@@ -59,10 +59,15 @@ void sequence_set(Step sequence[CUBES_NUM], char init_cube, const unsigned char 
     unsigned char patterns[PER_NUM][CUBES_NUM];
     for (int i = 0; i < PER_NUM; i++) {
         int index = 0;
+        if (i == 6) {
+            unsigned char tmp = pre_pattern[1];
+            pre_pattern[1] = pre_pattern[3];
+            pre_pattern[3] = tmp;
+        }
         for (int j = 0; j < PAT_LEN; j++) {
-            int shift = per[i][j];
+            int shift = per[i % 6][j];
             for (int k = 0; k < 1 + 2 * (shift & 1); k++, index++)
-                patterns[i][index] = pre_pattern[shift + k];
+                patterns[i % 6][index] = pre_pattern[shift + k];
         }
     }
 
