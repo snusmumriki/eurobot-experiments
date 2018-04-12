@@ -9,16 +9,16 @@
 #include "scanner.h"
 
 void target_set(int *point_x, int *point_y, int *angle, int samples[SAMPLES_NUM]) {
-    Point points[SAMPLES_NUM];
+    Point row[SAMPLES_NUM];
     for (int i = 0; i < SAMPLES_NUM; i++) {
         float ang = (float) (STEPS - i) / (float) STEPS_MAX * (float) M_PI;
-        points[i].x = cosf(ang) * (float) samples[i];
-        points[i].y = sinf(ang) * (float) samples[i];
+        row[i].x = cosf(ang) * (float) samples[i];
+        row[i].y = sinf(ang) * (float) samples[i];
     }
 
     float slopes[SAMPLES_NUM - 1];
     for (int i = 0; i < SAMPLES_NUM - 1; i++)
-        slopes[i] = (points[i + 1].y - points[i].y) / (points[i + 1].x - points[i].x);
+        slopes[i] = (row[i + 1].y - row[i].y) / (row[i + 1].x - row[i].x);
 
     char diffs[SAMPLES_NUM];
     for (int i = 1; i < SAMPLES_NUM - 1; i++)
@@ -30,24 +30,24 @@ void target_set(int *point_x, int *point_y, int *angle, int samples[SAMPLES_NUM]
         if (diffs[i] && diffs[i + 1])
             diffs[i] = 0;
 
-    int basicPoints[SAMPLES_NUM / 2];
-    int basicPoints_num = 0;
+    int points[SAMPLES_NUM / 2];
+    int pointsNum = 0;
     for (int i = 0; i < SAMPLES_NUM; i++)
         if (diffs[i]) {
-            basicPoints[basicPoints_num] = i;
-            basicPoints_num++;
+            points[pointsNum] = i;
+            pointsNum++;
         }
-    basicPoints[basicPoints_num] = SAMPLES_NUM;
+    points[pointsNum] = SAMPLES_NUM;
 
     int start, stop;
     float minX = 10000.f;
     int minJ = 0;
-    for (int j = 0; j < basicPoints_num; j++) {
+    for (int j = 0; j < pointsNum; j++) {
         float xSum = 0.f;
-        start = basicPoints[j];
-        stop = basicPoints[j + 1];
+        start = points[j];
+        stop = points[j + 1];
         for (int i = start; i < stop; i++)
-            xSum += points[i].x;
+            xSum += row[i].x;
         float x = xSum / (float) (stop - start);
         if (x < minX) {
             minX = x;
@@ -56,11 +56,11 @@ void target_set(int *point_x, int *point_y, int *angle, int samples[SAMPLES_NUM]
     }
 
     *point_x = (int) roundf(minX);
-    start = basicPoints[minJ];
-    stop = basicPoints[minJ + 1];
+    start = points[minJ];
+    stop = points[minJ + 1];
     float ySum = 0.f;
     for (int i = start; i < stop; i++)
-        ySum += points[i].y;
+        ySum += row[i].y;
     *point_y = (int) roundf(ySum / (float) (stop - start));
 
     stop--;

@@ -8,7 +8,8 @@
 
 #define CUBES_NUM 5
 #define PATS_NUM 12
-#define PAT_LEN 3
+#define PAT3_LEN 3
+#define ROW_LEN (char) 3
 
 typedef struct {
     char rotation;
@@ -21,7 +22,7 @@ typedef struct {
 } Weight;
 
 const char inv[CUBES_NUM] = {0, 3, 4, 1, 2};
-const char per[PATS_NUM / 2][PAT_LEN] = {
+const char per[PATS_NUM / 2][PAT3_LEN] = {
         {0, 1, 4},
         {0, 4, 1},
         {1, 0, 4},
@@ -44,8 +45,8 @@ int cmp(Weight weight, Weight weight1) {
     else return abs(weight.shift) - abs(weight1.shift);
 }
 
-void set_freeCubes(char *cube, char *cube1, const unsigned char cubes[PAT_LEN]) {
-    unsigned int set = 0b11111u ^(0b1u << cubes[0]) ^(0b1u << cubes[1]) ^(0b1u << cubes[2]);
+void set_freeCubes(char *cube, char *cube1, const unsigned char pat3[PAT3_LEN]) {
+    unsigned int set = 0b11111u ^(0b1u << pat3[0]) ^(0b1u << pat3[1]) ^(0b1u << pat3[2]);
     unsigned int tmp = set & (~set + 1);
     set ^= tmp;
     *cube = (char) (((tmp & 0b1u) != 0) * 1u |
@@ -67,17 +68,17 @@ void generate_patterns(char patterns[PATS_NUM][CUBES_NUM], char proto_pattern[CU
             proto_pattern[3] = tmp;
         }
         int index = 0;
-        for (int j = 0; j < PAT_LEN; j++) {
+        for (int j = 0; j < PAT3_LEN; j++) {
             int shift = per[i % 6][j];
-            for (int k = 0; k < 1 + 2 * (shift & 1); k++, index++)
+            for (int k = 0; k < 1 + 2 * (shift % 2); k++, index++)
                 patterns[i][index] = proto_pattern[shift + k];
         }
     }
 }
 
 void normalize_pattern(char pattern[CUBES_NUM]) {
-    static char rows[CUBES_NUM] = {2, 1, 0, 1, 0};
-    char basicCubes[4] = {-1, -1, -1, -1};
+    static char rows[CUBES_NUM] = {-1, 1, 0, 1, 0};
+    char cubes[4] = {-1, -1, -1, -1};
     rows[0] = (char) (pattern[0] % 2);
     for (int i = 0; i < 2; i++)
         if (rows[pattern[i]] != rows[pattern[i + 1]]) {
@@ -93,9 +94,11 @@ void normalize_pattern(char pattern[CUBES_NUM]) {
             shift = 0;
     }
     for (int i = 0; i < CUBES_NUM - 1; i++) {
-        if (rows[pattern[i]] == rows[pattern[i + 1]])
-            pattern[i + 1] = pattern[i];
-        if (basicCubes[rows[pattern[i]]] != -1);
+        char row = rows[pattern[i]];
+        if (cubes[row] == -1)
+            cubes[row] = pattern[i];
+        if (row == rows[pattern[i + 1]])
+            pattern[i + 1] = cubes[row];
     }
 }
 
@@ -119,25 +122,41 @@ int optPatternIndex(char init_cube, char patterns[PATS_NUM][CUBES_NUM]) {
     return minI;
 }
 
-void set_sequence(Step sequence[CUBES_NUM], char init_cube, const unsigned char cubes[PAT_LEN]) {
+Step *get_sequence(int *sequence_len, char initCube, const unsigned char pat3[PAT3_LEN]) {
     char proto_pattern[CUBES_NUM];
-    proto_pattern[1] = cubes[0];
-    proto_pattern[2] = cubes[1];
-    proto_pattern[3] = cubes[2];
-    set_freeCubes(proto_pattern, proto_pattern + 4, cubes);
+    proto_pattern[1] = pat3[0];
+    proto_pattern[2] = pat3[1];
+    proto_pattern[3] = pat3[2];
+    set_freeCubes(proto_pattern, proto_pattern + 4, pat3);
 
     char patterns[PATS_NUM][CUBES_NUM];
+    //TODO generate_pattern function
     generate_patterns(patterns, proto_pattern);
 
     for (int i = 0; i < PATS_NUM; i++)
         normalize_pattern(patterns[i]);
 
     char steps[CUBES_NUM];
-    char *pattern = patterns[optPatternIndex(init_cube, patterns)];
-    steps[0] = diff(init_cube, pattern[0]);
-    for (int j = 0; j < CUBES_NUM - 1; j++)
-        steps[j + 1] = diff(pattern[j], pattern[j + 1]);
+    char *pattern = patterns[optPatternIndex(initCube, patterns)];
+    steps[0] = diff(initCube, pattern[0]);
+    int seq_len = 1;
+    for (int i = 0; i < CUBES_NUM - 1; i++)
+        seq_len += (steps[i + 1] = diff(pattern[i], pattern[i + 1])) != 0;
 
-    int nums[2] = {3, 3};
-    for (int i = 0; i < PAT_LEN; i++);
+    char nums[2] = {ROW_LEN, ROW_LEN};
+    char pushes[CUBES_NUM];
+    for (int i = 0; i < CUBES_NUM; i++) {
+        int row = pattern[i] % 2;
+        pushes[i] = ROW_LEN - nums[row]--;
+        if (nums[row] == 1)
+            nums[!row]--;
+    }
+
+    int j = 0;
+    Step *sequence = malloc(seq_len * sizeof(Step));
+    for (int i = 0; i < CUBES_NUM; i++)
+        if (i != 0 && steps[i] != 0)
+            sequence[j++] = {.rotation = steps[i], .push = pushes[i]};
+
+    return sequence;
 }
