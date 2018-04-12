@@ -44,25 +44,22 @@ int cmp(Weight weight, Weight weight1) {
     else return abs(weight.shift) - abs(weight1.shift);
 }
 
-void sequence_set(Step sequence[CUBES_NUM], char init_cube, const char cubes[PAT_LEN]) {
+void set_freeCubes(char *cube, char *cube1, const unsigned char cubes[PAT_LEN]) {
     unsigned int set = 0b11111u ^(0b1u << cubes[0]) ^(0b1u << cubes[1]) ^(0b1u << cubes[2]);
     unsigned int tmp = set & (~set + 1);
     set ^= tmp;
-    char proto_pattern[CUBES_NUM];
-    proto_pattern[0] = (char) (((tmp & 0b1u) != 0) * 1u |
-                               ((tmp & 0b10u) != 0) * 2u |
-                               ((tmp & 0b1000u) != 0) * 3u |
-                               ((tmp & 0b10000u) != 0) * 4u);
-    proto_pattern[1] = cubes[0];
-    proto_pattern[2] = cubes[1];
-    proto_pattern[3] = cubes[2];
+    *cube = (char) (((tmp & 0b1u) != 0) * 1u |
+                    ((tmp & 0b10u) != 0) * 2u |
+                    ((tmp & 0b1000u) != 0) * 3u |
+                    ((tmp & 0b10000u) != 0) * 4u);
     tmp = set & (~set + 1);
-    proto_pattern[4] = (char) (((tmp & 0b1u) != 0) * 1u |
-                               ((tmp & 0b10u) != 0) * 2u |
-                               ((tmp & 0b1000u) != 0) * 3u |
-                               ((tmp & 0b10000u) != 0) * 4u);
+    *cube1 = (char) (((tmp & 0b1u) != 0) * 1u |
+                     ((tmp & 0b10u) != 0) * 2u |
+                     ((tmp & 0b1000u) != 0) * 3u |
+                     ((tmp & 0b10000u) != 0) * 4u);
+}
 
-    char patterns[PATS_NUM][CUBES_NUM];
+void generate_patterns(char patterns[PATS_NUM][CUBES_NUM], char proto_pattern[CUBES_NUM]) {
     for (int i = 0; i < PATS_NUM; i++) {
         if (i == 6) {
             char tmp = proto_pattern[1];
@@ -76,27 +73,33 @@ void sequence_set(Step sequence[CUBES_NUM], char init_cube, const char cubes[PAT
                 patterns[i][index] = proto_pattern[shift + k];
         }
     }
+}
 
-    char rows[CUBES_NUM] = {2, 1, 0, 1, 0};
-    for (int i = 0; i < PATS_NUM; i++) {
-        char *pattern = patterns[i];
-        rows[0] = (char) (pattern[0] % 2);
-        for (int j = 0; j < 2; j++)
-            if (rows[pattern[j]] != rows[pattern[j + 1]]) {
-                char inv_cube = inv[pattern[j]];
-                rows[inv_cube] = !rows[inv_cube];
-            }
-        char shift = 0;
-        for (int j = 0; j < CUBES_NUM - 1; j++) {
-            rows[pattern[j]] ^= shift;
-            if (inv[pattern[j]] == pattern[j + 1])
-                shift = 1;
+void normalize_pattern(char pattern[CUBES_NUM]) {
+    static char rows[CUBES_NUM] = {2, 1, 0, 1, 0};
+    char basicCubes[4] = {-1, -1, -1, -1};
+    rows[0] = (char) (pattern[0] % 2);
+    for (int i = 0; i < 2; i++)
+        if (rows[pattern[i]] != rows[pattern[i + 1]]) {
+            char inv_cube = inv[pattern[i]];
+            rows[inv_cube] = !rows[inv_cube];
         }
-        for (int j = 0; j < CUBES_NUM - 1; j++)
-            if (rows[pattern[j]] == rows[pattern[j + 1]])
-                pattern[j + 1] = pattern[j];
+    char shift = 0;
+    for (int i = 0; i < CUBES_NUM - 1; i++) {
+        rows[pattern[i]] += shift;
+        if (inv[pattern[i]] == pattern[i + 1])
+            shift = 2;
+        if (shift == 2 && rows[pattern[i]] != rows[pattern[i + 1]])
+            shift = 0;
     }
+    for (int i = 0; i < CUBES_NUM - 1; i++) {
+        if (rows[pattern[i]] == rows[pattern[i + 1]])
+            pattern[i + 1] = pattern[i];
+        if (basicCubes[rows[pattern[i]]] != -1);
+    }
+}
 
+int optPatternIndex(char init_cube, char patterns[PATS_NUM][CUBES_NUM]) {
     Weight minWeight = {.steps = SCHAR_MAX, .shift = SCHAR_MAX};
     int minI = 0;
     for (int i = 0; i < PATS_NUM; i++) {
@@ -113,13 +116,28 @@ void sequence_set(Step sequence[CUBES_NUM], char init_cube, const char cubes[PAT
             minI = i;
         }
     }
+    return minI;
+}
+
+void set_sequence(Step sequence[CUBES_NUM], char init_cube, const unsigned char cubes[PAT_LEN]) {
+    char proto_pattern[CUBES_NUM];
+    proto_pattern[1] = cubes[0];
+    proto_pattern[2] = cubes[1];
+    proto_pattern[3] = cubes[2];
+    set_freeCubes(proto_pattern, proto_pattern + 4, cubes);
+
+    char patterns[PATS_NUM][CUBES_NUM];
+    generate_patterns(patterns, proto_pattern);
+
+    for (int i = 0; i < PATS_NUM; i++)
+        normalize_pattern(patterns[i]);
 
     char steps[CUBES_NUM];
-    char *pattern = patterns[minI];
+    char *pattern = patterns[optPatternIndex(init_cube, patterns)];
     steps[0] = diff(init_cube, pattern[0]);
     for (int j = 0; j < CUBES_NUM - 1; j++)
         steps[j + 1] = diff(pattern[j], pattern[j + 1]);
 
     int nums[2] = {3, 3};
-    for(int i = 0; i < PAT_LEN; i++);
+    for (int i = 0; i < PAT_LEN; i++);
 }
