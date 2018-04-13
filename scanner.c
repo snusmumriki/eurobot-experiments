@@ -37,12 +37,13 @@ void target_set(int *point_x, int *point_y, int *angle, int samples[SAMPLES_NUM]
             points[pointsNum] = i;
             pointsNum++;
         }
-    points[pointsNum] = SAMPLES_NUM;
+    if (diffs[SAMPLES_NUM - 1] == 0)
+        points[pointsNum++] = SAMPLES_NUM;
 
     int start, stop;
     float minX = 10000.f;
     int minJ = 0;
-    for (int j = 0; j < pointsNum; j++) {
+    for (int j = 0; j < pointsNum - 1; j++) {
         float xSum = 0.f;
         start = points[j];
         stop = points[j + 1];
