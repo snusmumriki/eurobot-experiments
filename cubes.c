@@ -92,43 +92,37 @@ Weight getPatWeight(char init_cube, char pattern[CUBES_NUM]) {
     return weight;
 }
 
-int optPatIndex(char init_cube, char patterns[PATTERNS_NUM][CUBES_NUM]) {
-    Weight minWeight = {.steps = SCHAR_MAX, .shift = SCHAR_MAX};
-    int minI = 0;
-    for (int i = 0; i < PATTERNS_NUM; i++) {
-        char *pattern = patterns[i];
-        Weight weight = pattern[0] ? getPatWeight(init_cube, pattern) :
-                        (Weight) {.steps = SCHAR_MAX, .shift = SCHAR_MAX};
-        if (cmp(weight, minWeight) < 0) {
-            minWeight = weight;
-            minI = i;
-        }
-    }
-    return minI;
-}
-
-Step *getSequence(int *sequenceLen, char initCube, const unsigned char pat3[PAT3_LEN]) {
+Step *getSequence(int *sequenceLen, char init_cube, const unsigned char pat3[PAT3_LEN]) {
     proto_pattern[1] = pat3[0];
     proto_pattern[2] = pat3[1];
     proto_pattern[3] = pat3[2];
     set_freeCubes(proto_pattern, proto_pattern + 4, pat3);
+
     char patterns[PATTERNS_NUM][CUBES_NUM];
+    char *pattern = patterns[0];
+    Weight minWeight = {.steps = SCHAR_MAX, .shift = SCHAR_MAX};
     for (int i = 0; i < PATTERNS_NUM; i++) {
+        char *pat = patterns[i];
         if (i == 6) {
             char tmp = proto_pattern[1];
             proto_pattern[1] = proto_pattern[3];
             proto_pattern[3] = tmp;
         }
-        generate_pattern(patterns[i], permutations[i % 6]);
-        if (patterns[i][0])
-            normalize_pattern(patterns[i]);
+        generate_pattern(pat, permutations[i % 6]);
+        if (pat[0]) normalize_pattern(pat);
+
+        Weight weight = pat[0] ? getPatWeight(init_cube, pat) :
+                        (Weight) {.steps = SCHAR_MAX, .shift = SCHAR_MAX};
+        if (cmp(weight, minWeight) < 0) {
+            minWeight = weight;
+            pattern = pat;
+        }
     }
 
     int j = 0;
     Step *sequence = malloc(CUBES_NUM * sizeof(int));
 
-    char *pattern = patterns[optPatIndex(initCube, patterns)];
-    sequence[j++].step = diff(initCube, pattern[0]);
+    sequence[j++].step = diff(init_cube, pattern[0]);
     for (int i = 0; i < CUBES_NUM - 1; i++) {
         char step = diff(pattern[i], pattern[i + 1]);
         if (step) sequence[j++].step = step;
