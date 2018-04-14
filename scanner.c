@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include "scanner.h"
 
-void target_set(int *point_x, int *point_y, int *angle, int samples[SAMPLES_NUM]) {
+void target_set(Point *point, int *angle, int samples[SAMPLES_NUM]) {
     Point row[SAMPLES_NUM];
     for (int i = 0; i < SAMPLES_NUM; i++) {
         float ang = (float) (STEPS - i) / (float) STEPS_MAX * (float) M_PI;
@@ -56,13 +56,13 @@ void target_set(int *point_x, int *point_y, int *angle, int samples[SAMPLES_NUM]
         }
     }
 
-    *point_x = (int) roundf(minX);
+    point->x = (int) roundf(minX);
     start = points[minJ];
     stop = points[minJ + 1];
     float ySum = 0.f;
     for (int i = start; i < stop; i++)
         ySum += row[i].y;
-    *point_y = (int) roundf(ySum / (float) (stop - start));
+    point->y = (int) roundf(ySum / (float) (stop - start));
 
     stop--;
     if (angle != NULL) {

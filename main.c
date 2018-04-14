@@ -1,13 +1,15 @@
 #include <stdio.h>
 #include "scanner.h"
+#include "cubes.h"
+
+char proto_pattern[CUBES_NUM];
+extern const char permutations[PATTERNS_NUM / 2][3];
 
 int main() {
-    int x, y;
-    int angle;
-    int samples[SAMPLES_NUM] = {57, 49, 45, 41, 40, 41, 45, 49, 57};
-    //target_set(&x, &y, &angle, samples);
-    //printf("%i %i %i", x, y, angle);
-    char t = -1;
-    printf("%i", t);
+    int sequenceLen;
+    unsigned char pat3[PAT3_LEN] = {1, 0, 3};
+    Step *sequence = getSequence(&sequenceLen, 1, pat3);
+    for (int i = 0; i < sequenceLen; i++)
+        printf("%i/%i ", sequence[i].step, sequence[i].push);
     return 0;
 }
