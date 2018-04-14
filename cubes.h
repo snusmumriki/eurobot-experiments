@@ -30,7 +30,7 @@ void generate_pattern(char pattern[CUBES_NUM], const char permutation[3]);
 
 void normalize_pattern(char pattern[CUBES_NUM]);
 
-int optPatIndex(char init_cube, char patterns[PATTERNS_NUM][CUBES_NUM]);
+Weight getPatWeight(char init_cube, char pattern[CUBES_NUM]);
 
 Step *getSequence(int *sequenceLen, char initCube, const unsigned char pat3[PAT3_LEN]);
 
