@@ -107,6 +107,7 @@ int optPatIndex(char init_cube, char patterns[PATTERNS_NUM][CUBES_NUM]) {
             minI = i;
         }
     }
+
     return minI;
 }
 
