@@ -48,11 +48,11 @@ void set_freeCubes(char *cube, char *cube1, const unsigned char pat3[PAT3_LEN]) 
 }
 
 void generate_pattern(char pattern[CUBES_NUM], const char permutation[3]) {
-    int index = 0;
+    int k = 0;
     for (int i = 0; i < PER_LEN; i++) {
         int shift = permutation[i];
-        for (int j = 0; j < 1 + 2 * (shift % 2); j++, index++)
-            pattern[index] = proto_pattern[shift + j];
+        for (int j = 0; j < 1 + 2 * (shift % 2); j++, k++)
+            pattern[k] = proto_pattern[shift + j];
     }
 }
 
@@ -65,7 +65,6 @@ void normalize_pattern(char pattern[CUBES_NUM]) {
         char invCube = inv[cube];
         if (i < 2 && rows[cube] != rows[cube1] && invCube != pattern[0])
             rows[invCube] = !rows[invCube];
-
         if (rows[cube] == shift)
             rows[cube] += 2;
         if (i < 2 && inv[cube] == cube1)
