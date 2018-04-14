@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-const char inv[CUBES_NUM] = {5, 3, 4, 1, 2};
+const char inversions[CUBES_NUM] = {NULL_CUBE, 3, 4, 1, 2};
 const char permutations[PATTERNS_NUM / 2][PER_LEN] = {
         {0, 1, 4},
         {0, 4, 1},
@@ -15,6 +15,7 @@ const char permutations[PATTERNS_NUM / 2][PER_LEN] = {
         {1, 4, 0},
         {4, 0, 1},
         {4, 1, 0}};
+
 char proto_pattern[CUBES_NUM];
 
 char diff(char cube, char cube1) {
@@ -32,7 +33,7 @@ int cmp(Weight weight, Weight weight1) {
     else return abs(weight.shift) - abs(weight1.shift);
 }
 
-void set_freeCubes(char *cube, char *cube1, const unsigned char pat3[PAT3_LEN]) {
+void get_freeCubes(char *cube, char *cube1, const unsigned char *pat3) {
     unsigned int set = 0b11111u ^(0b1u << pat3[0]) ^(0b1u << pat3[1]) ^(0b1u << pat3[2]);
     unsigned int tmp = set & (~set + 1);
     set ^= tmp;
@@ -58,30 +59,30 @@ void generate_pattern(char pattern[CUBES_NUM], const char permutation[3]) {
 
 void normalize_pattern(char pattern[CUBES_NUM]) {
     char rows[CUBES_NUM] = {pattern[0] % (char) 2, 1, 0, 1, 0};
-    char shift = 5;
+    char shift = NULL_CUBE;
     for (int i = 0; i < CUBES_NUM - 1; i++) {
         char cube = pattern[i];
         char cube1 = pattern[i + 1];
-        char invCube = inv[cube];
-        if (i < 2 && rows[cube] != rows[cube1] && invCube != pattern[0])
-            rows[invCube] = !rows[invCube];
+        char inv_cube = inversions[cube];
+        if (i < 2 && rows[cube] != rows[cube1] && inv_cube != pattern[0])
+            rows[inv_cube] = !rows[inv_cube];
         if (rows[cube] == shift)
             rows[cube] += 2;
-        if (i < 2 && inv[cube] == cube1)
+        if (i < 2 && inversions[cube] == cube1)
             shift = rows[cube];
     }
 
-    char cubes[4] = {5, 5, 5, 5};
+    char cubes[EDGE_CUBES_NUM] = {NULL_CUBE, NULL_CUBE, NULL_CUBE, NULL_CUBE};
     for (int i = 0; i < CUBES_NUM; i++) {
         char row = rows[pattern[i]];
-        if (cubes[row] == 5)
+        if (cubes[row] == NULL_CUBE)
             cubes[row] = pattern[i];
         pattern[i] = cubes[row];
     }
 }
 
-Weight getPatWeight(char init_cube, char pattern[CUBES_NUM]) {
-    char step = diff(init_cube, pattern[0]);
+Weight get_patWeight(char initCube, char *pattern) {
+    char step = diff(initCube, pattern[0]);
     Weight weight = {.steps = (char) abs(step), .shift = step};
     for (int j = 0; j < CUBES_NUM - 1; j++) {
         step = diff(pattern[j], pattern[j + 1]);
@@ -91,11 +92,11 @@ Weight getPatWeight(char init_cube, char pattern[CUBES_NUM]) {
     return weight;
 }
 
-Step *getSequence(int *sequenceLen, char init_cube, const unsigned char pat3[PAT3_LEN]) {
+Step *getSequence(int *sequenceLen, char initCube, const unsigned char pat3[PAT3_LEN]) {
     proto_pattern[1] = pat3[0];
     proto_pattern[2] = pat3[1];
     proto_pattern[3] = pat3[2];
-    set_freeCubes(proto_pattern, proto_pattern + 4, pat3);
+    get_freeCubes(proto_pattern, proto_pattern + 4, pat3);
 
     char patterns[PATTERNS_NUM][CUBES_NUM];
     char *pattern = patterns[0];
@@ -110,7 +111,7 @@ Step *getSequence(int *sequenceLen, char init_cube, const unsigned char pat3[PAT
         generate_pattern(pat, permutations[i % 6]);
         if (pat[0]) normalize_pattern(pat);
 
-        Weight weight = pat[0] ? getPatWeight(init_cube, pat) :
+        Weight weight = pat[0] ? get_patWeight(initCube, pat) :
                         (Weight) {.steps = SCHAR_MAX, .shift = SCHAR_MAX};
         if (cmp(weight, minWeight) < 0) {
             minWeight = weight;
@@ -120,8 +121,7 @@ Step *getSequence(int *sequenceLen, char init_cube, const unsigned char pat3[PAT
 
     int j = 0;
     Step *sequence = malloc(CUBES_NUM * sizeof(int));
-
-    sequence[j++].step = diff(init_cube, pattern[0]);
+    sequence[j++].step = diff(initCube, pattern[0]);
     for (int i = 0; i < CUBES_NUM - 1; i++) {
         char step = diff(pattern[i], pattern[i + 1]);
         if (step) sequence[j++].step = step;

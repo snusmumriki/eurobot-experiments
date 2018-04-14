@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include "scanner.h"
 
-void target_set(Point *point, int *angle, int samples[SAMPLES_NUM]) {
+void get_target(Point *point, int *angle, const int samples[SAMPLES_NUM]) {
     Point row[SAMPLES_NUM];
     for (int i = 0; i < SAMPLES_NUM; i++) {
         float ang = (float) (STEPS - i) / (float) STEPS_MAX * (float) M_PI;

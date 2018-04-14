@@ -15,6 +15,6 @@ typedef struct {
     float y;
 } Point;
 
-void target_set(Point *point, int *angle, int samples[SAMPLES_NUM]);
+void get_target(Point *point, int *angle, const int samples[SAMPLES_NUM]);
 
 #endif //UNTITLED2_SCANNER_H

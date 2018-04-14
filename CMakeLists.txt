@@ -3,4 +3,4 @@ project(untitled2 C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(untitled2 main.c scanner.c scanner.h cubes.c cubes.h)
+add_executable(untitled2 main.c scanner.c scanner.h cubes.c cubes.h manipulator.c manipulator.h)
