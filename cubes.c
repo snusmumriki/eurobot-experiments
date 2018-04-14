@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-const char inv[CUBES_NUM] = {0, 3, 4, 1, 2};
+const char inv[CUBES_NUM] = {5, 3, 4, 1, 2};
 const char permutations[PATTERNS_NUM / 2][PER_LEN] = {
         {0, 1, 4},
         {0, 4, 1},
@@ -57,27 +57,29 @@ void generate_pattern(char pattern[CUBES_NUM], const char permutation[3]) {
 }
 
 void normalize_pattern(char pattern[CUBES_NUM]) {
-    char rows[CUBES_NUM] = {pattern[0] % (char) 2, 1, 0, 1, 0};
-    for (int i = 0; i < 2; i++)
-        if (rows[pattern[i]] != rows[pattern[i + 1]]) {
-            char inv_cube = inv[pattern[i]];
-            rows[inv_cube] = !rows[inv_cube];
+    if (pattern[0]) {
+        char rows[CUBES_NUM] = {pattern[0] % (char) 2, 1, 0, 1, 0};
+        char shift = 5;
+        for (int i = 0; i < CUBES_NUM - 1; i++) {
+            char cube = pattern[i];
+            char cube1 = pattern[i + 1];
+            char invCube = inv[cube];
+            if (i < 2 && rows[cube] != rows[cube1] && invCube != pattern[0])
+                rows[invCube] = !rows[invCube];
+
+            if (rows[cube] == shift)
+                rows[cube] += 2;
+            if (i < 2 && inv[cube] == cube1)
+                shift = rows[cube];
         }
-    char shift = 0;
-    for (int i = 0; i < CUBES_NUM - 1; i++) {
-        char cube = pattern[i];
-        rows[cube] += shift;
-        if (inv[cube] == pattern[i + 1] && cube)
-            shift = 2;
-        if (shift == 2 && rows[pattern[i]] != rows[pattern[i + 1]])
-            shift = 0;
-    }
-    char cubes[4] = {5, 5, 5, 5};
-    for (int i = 0; i < CUBES_NUM; i++) {
-        char row = rows[pattern[i]];
-        if (cubes[row] == 5)
-            cubes[row] = pattern[i];
-        pattern[i] = cubes[row];
+
+        char cubes[4] = {5, 5, 5, 5};
+        for (int i = 0; i < CUBES_NUM; i++) {
+            char row = rows[pattern[i]];
+            if (cubes[row] == 5)
+                cubes[row] = pattern[i];
+            pattern[i] = cubes[row];
+        }
     }
 }
 
@@ -86,12 +88,19 @@ int optPatIndex(char init_cube, char patterns[PATTERNS_NUM][CUBES_NUM]) {
     int minI = 0;
     for (int i = 0; i < PATTERNS_NUM; i++) {
         char *pattern = patterns[i];
-        char step = diff(init_cube, pattern[0]);
-        Weight weight = {.steps = (char) abs(step), .shift = step};
-        for (int j = 0; j < CUBES_NUM - 1; j++) {
-            step = diff(pattern[j], pattern[j + 1]);
-            weight.steps += abs(step);
-            weight.shift += step;
+        Weight weight;
+        if (pattern[0]) {
+            char step = diff(init_cube, pattern[0]);
+            weight.steps = (char) abs(step);
+            weight.shift = step;
+            for (int j = 0; j < CUBES_NUM - 1; j++) {
+                step = diff(pattern[j], pattern[j + 1]);
+                weight.steps += abs(step);
+                weight.shift += step;
+            }
+        } else {
+            weight.steps = SCHAR_MAX;
+            weight.shift = SCHAR_MAX;
         }
         if (cmp(weight, minWeight) < 0) {
             minWeight = weight;
@@ -128,6 +137,7 @@ Step *getSequence(int *sequenceLen, char initCube, const unsigned char pat3[PAT3
 
     int j = 0;
     Step *sequence = malloc(CUBES_NUM * sizeof(int));
+
     char *pattern = patterns[optPatIndex(initCube, patterns)];
     sequence[j++].step = diff(initCube, pattern[0]);
     for (int i = 0; i < CUBES_NUM - 1; i++) {
@@ -139,9 +149,8 @@ Step *getSequence(int *sequenceLen, char initCube, const unsigned char pat3[PAT3
     for (int i = 0; i < CUBES_NUM; i++) {
         int row = pattern[i] % 2;
         nums[row]++;
-        if (i == CUBES_NUM - 1 || pattern[i] != pattern[i + 1]) {
+        if (i == CUBES_NUM - 1 || pattern[i] != pattern[i + 1])
             sequence[j++].push = nums[row];
-        }
         if (nums[row] == 2)
             nums[!row]++;
     }
