@@ -31,6 +31,7 @@ int cmp(Weight weight, Weight weight1) {
     if (weight.steps != weight1.steps)
         return weight.steps - weight1.steps;
     else return abs(weight.shift) - abs(weight1.shift);
+    //else return abs(weight.shift + 1) - abs(weight1.shift + 1);
 }
 
 void get_freeCubes(char *cube, char *cube1, const unsigned char *pat3) {

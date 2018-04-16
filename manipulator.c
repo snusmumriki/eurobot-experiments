@@ -57,4 +57,5 @@ char *get_pat3(const RGB cubes_rgb[EDGE_CUBES_NUM], const char color_pat3[PAT3_L
     pat3[0] = cubes[color_pat3[0]];
     pat3[1] = cubes[color_pat3[1]];
     pat3[2] = cubes[color_pat3[3]];
+    return pat3;
 }
